@@ -253,27 +253,19 @@ def populate_aggregated_jsons(path: str) -> None:
         # create a stub onsets file for each one of those
         suf = "_bold.json"
         assert fpath.endswith(suf)
-        # specify the name of the '_events.tsv' file:
-        if "_echo-" in fpath:
-            # multi-echo sequence: bids (1.1.0) specifies just one '_events.tsv'
-            #   file, common for all echoes.  The name will not include _echo-.
-            # TODO: RF to use re.match for better readability/robustness
-            # So, find out the echo number:
-            fpath_split = fpath.split("_echo-", 1)  # split fpath using '_echo-'
-            fpath_split_2 = fpath_split[1].split(
-                "_", 1
-            )  # split the second part of fpath_split using '_'
-            echoNo = fpath_split_2[0]  # get echo number
-            if echoNo == "1":
-                if len(fpath_split_2) != 2:
-                    raise ValueError("Found no trailer after _echo-")
-                # we modify fpath to exclude '_echo-' + echoNo:
-                fpath = fpath_split[0] + "_" + fpath_split_2[1]
-            else:
-                # for echoNo greater than 1, don't create the events file, so go to
-                #   the next for loop iteration:
-                continue
 
+        # specify the name of the '_events.tsv' file:
+        parsed_fpath = BIDSFile.parse(op.basename(fpath))
+        for invalid_entity in ['chunk', 'echo', 'part']:
+            # events.tsv with these entities are not specified
+            if invalid_entity in parsed_fpath:
+                parsed_fpath.drop(invalid_entity, silent=True)
+        if 'rec' in parsed_fpath:
+            # `rec` is technically valid for the events file, but the events
+            # are independent of the reconstruction method and so we drop them
+            # as well
+            parsed_fpath.drop('rec')
+        fpath = op.join(op.dirname(fpath), str(parsed_fpath))
         events_file = remove_suffix(fpath, suf) + "_events.tsv"
         # do not touch any existing thing, it may be precious
         if not op.lexists(events_file):
@@ -1155,6 +1147,16 @@ class BIDSFile:
         self, entity: str, value: str
     ) -> None:  # would puke with some exception if already known
         return self.set(entity, value, overwrite=False)
+
+    def __contains__(self, entity: object) -> bool:
+        return entity in self._entities
+
+    def drop(self, entity: str, silent: bool = False) -> None:
+        if entity not in self._entities:
+            if not silent:
+                lgr.warning("File %s does not contain entity '%s'", self.__str__(), entity)
+            return
+        self._entities.pop(entity)
 
     def set(self, entity: str, value: str, overwrite: bool = True) -> None:
         if entity not in self._entities:

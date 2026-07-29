@@ -8,6 +8,7 @@ from collections.abc import Callable
 from datetime import datetime, timedelta
 from glob import glob
 import itertools
+import logging
 import os
 import os.path as op
 from pathlib import Path
@@ -31,6 +32,7 @@ from heudiconv.bids import (
     get_key_info_for_fmap_assignment,
     get_shim_setting,
     maybe_na,
+    populate_aggregated_jsons,
     populate_intended_for,
     sanitize_label,
     select_fmap_from_compatible_groups,
@@ -1506,7 +1508,7 @@ def test_populate_intended_for(
                 assert "IntendedFor" not in data.keys()
 
 
-def test_BIDSFile() -> None:
+def test_BIDSFile(caplog: pytest.LogCaptureFixture) -> None:
     """Tests for the BIDSFile class"""
 
     # define entities in the correct order:
@@ -1573,6 +1575,40 @@ def test_BIDSFile() -> None:
     # -for an existing entity, you can overwrite it with "set":
     my_bids_file.set("echo", "2")
     assert my_bids_file["echo"] == "2"
+
+    # Test drop method
+    my_bids_file.drop("dir")
+    assert "dir" not in my_bids_file
+    # dropping an entity which is not set only logs a warning:
+    caplog.set_level(logging.WARNING)
+    caplog.clear()
+    my_bids_file.drop('dir')
+    assert len(caplog.records) == 1
+    assert "does not contain entity 'dir'" in caplog.records[0].message
+    caplog.clear()
+    my_bids_file.drop('not_existing', silent=True)
+    assert len(caplog.records) == 0
+
+
+def test_populate_aggregated_jsons_events(tmp_path: Path) -> None:
+    """A single _events.tsv is generated for files differing only in
+    entities the events are independent of (here: 'rec' and 'part')."""
+    func_path = tmp_path / "sub-01" / "func"
+    bold_json = {"RepetitionTime": 1.0, "TaskName": "rest"}
+    create_tree(
+        str(func_path),
+        {
+            f"sub-01_task-rest_{entity}_bold.json": dict(bold_json)
+            for entity in ["rec-A", "rec-B", "part-mag", "part-phase"]
+        },
+    )
+
+    populate_aggregated_jsons(str(tmp_path))
+
+    events_files = sorted(func_path.glob("*_events.tsv"))
+    assert events_files == [func_path / "sub-01_task-rest_events.tsv"]
+    # and nothing got written elsewhere in the dataset:
+    assert sorted(tmp_path.rglob("*_events.tsv")) == events_files
 
 
 @pytest.mark.skipif(not have_datalad, reason="no datalad")
