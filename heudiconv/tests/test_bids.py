@@ -1579,15 +1579,14 @@ def test_BIDSFile(caplog: pytest.LogCaptureFixture) -> None:
     # Test drop method
     my_bids_file.drop("dir")
     assert "dir" not in my_bids_file
-    # dropping an entity which is not set only logs a warning:
+    # dropping an entity which is not set only logs a warning
     caplog.set_level(logging.WARNING)
-    caplog.clear()
-    my_bids_file.drop('dir')
-    assert len(caplog.records) == 1
-    assert "does not contain entity 'dir'" in caplog.records[0].message
-    caplog.clear()
-    my_bids_file.drop('not_existing', silent=True)
-    assert len(caplog.records) == 0
+    # test previously dropped entity and entirely non-existing
+    for entity in ['dir', 'not_existing']:
+        caplog.clear()
+        my_bids_file.drop(entity)
+        assert len(caplog.records) == 1
+        assert f"does not contain entity '{entity}'" in caplog.records[0].message
 
 
 def test_populate_aggregated_jsons_events(tmp_path: Path) -> None:

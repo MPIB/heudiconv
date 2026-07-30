@@ -259,7 +259,7 @@ def populate_aggregated_jsons(path: str) -> None:
         for invalid_entity in ['chunk', 'echo', 'part']:
             # events.tsv with these entities are not specified
             if invalid_entity in parsed_fpath:
-                parsed_fpath.drop(invalid_entity, silent=True)
+                parsed_fpath.drop(invalid_entity)
         if 'rec' in parsed_fpath:
             # `rec` is technically valid for the events file, but the events
             # are independent of the reconstruction method and so we drop them
@@ -1151,10 +1151,9 @@ class BIDSFile:
     def __contains__(self, entity: object) -> bool:
         return entity in self._entities
 
-    def drop(self, entity: str, silent: bool = False) -> None:
+    def drop(self, entity: str) -> None:
         if entity not in self._entities:
-            if not silent:
-                lgr.warning("File %s does not contain entity '%s'", self.__str__(), entity)
+            lgr.warning("File %s does not contain entity '%s'", self.__str__(), entity)
             return
         self._entities.pop(entity)
 
