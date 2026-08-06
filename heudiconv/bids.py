@@ -256,15 +256,9 @@ def populate_aggregated_jsons(path: str) -> None:
 
         # specify the name of the '_events.tsv' file:
         parsed_fpath = BIDSFile.parse(op.basename(fpath))
-        for invalid_entity in ['chunk', 'echo', 'part']:
+        for events_invalid_entity in ['chunk', 'echo', 'part']:
             # events.tsv with these entities are not specified
-            if invalid_entity in parsed_fpath:
-                parsed_fpath.drop(invalid_entity)
-        if 'rec' in parsed_fpath:
-            # `rec` is technically valid for the events file, but the events
-            # are independent of the reconstruction method and so we drop them
-            # as well
-            parsed_fpath.drop('rec')
+            parsed_fpath.drop(events_invalid_entity, missing_ok=True)
         fpath = op.join(op.dirname(fpath), str(parsed_fpath))
         events_file = remove_suffix(fpath, suf) + "_events.tsv"
         # do not touch any existing thing, it may be precious
