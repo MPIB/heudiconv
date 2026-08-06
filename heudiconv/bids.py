@@ -1145,10 +1145,9 @@ class BIDSFile:
     def __contains__(self, entity: object) -> bool:
         return entity in self._entities
 
-    def drop(self, entity: str) -> None:
-        if entity not in self._entities:
-            lgr.warning("File %s does not contain entity '%s'", self.__str__(), entity)
-            return
+    def drop(self, entity: str, missing_ok: bool=False) -> None:
+        if not missing_ok and entity not in self._entities:
+            raise ValueError(f"{self} does not contain entity {entity!r}")
         self._entities.pop(entity)
 
     def set(self, entity: str, value: str, overwrite: bool = True) -> None:
