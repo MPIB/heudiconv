@@ -107,10 +107,17 @@ Note that you will likely have these will already be available on your system if
 package manager (e.g. Debian's ``apt-get``, Gentoo's ``emerge``, or simply PIP) to install the
 software.
 
-HeuDiConv also calls out to a number of external tools, most notably ``dcm2niix``, which is not
-installable from PyPI and thus must be provided by your system (e.g. via NeuroDebian, conda, or
-`its own releases <https://github.com/rordenlab/dcm2niix/releases>`_).  Some tests additionally
-require ``git-annex`` and ``datalad``.
+HeuDiConv also calls out to a number of external tools, most notably ``dcm2niix``, and some tests
+additionally need ``git-annex`` and ``datalad``.  All of them are nowadays installable from PyPI,
+so a plain virtualenv is enough to get a complete development environment::
+
+  pip install dcm2niix git-annex
+
+`dcm2niix <https://pypi.org/project/dcm2niix/>`_ and
+`git-annex <https://pypi.org/project/git-annex/>`_ are wheels bundling the corresponding binaries
+for common platforms; ``datalad`` is pulled in by the ``datalad`` (and hence ``all``) extra of
+HeuDiConv itself.  You may of course still prefer to obtain them from your system package manager
+(e.g. NeuroDebian, conda, or Homebrew) if you already have those set up.
 
 Development work might require live access to the copy of HeuDiConv which is being developed.
 If a system-wide release of HeuDiConv is already installed, or likely to be, it is best to keep
@@ -153,6 +160,12 @@ them all against the whole tree at any point with ``pre-commit run -a``, and the
 
 Beyond what the tools enforce:
 
+* **Do not duplicate code.**  Copy-pasted logic is the single most reliable way to introduce bugs
+  into this codebase: the copies inevitably diverge, a fix lands in one of them and not the others,
+  and the discrepancy is then found by users rather than by us.  If you catch yourself
+  copy-pasting, factor the common part out into a helper instead — even for two occurrences, and
+  even when the copies differ in small ways (that is what arguments are for).  This applies with
+  equal force to tests, docs, and heuristics, not just to library code.
 * HeuDiConv is fully type-annotated and ships a ``py.typed`` marker.  New functions must have
   annotated arguments and return values; ``mypy`` is run in CI and can be run locally with
   ``tox -e typing``.
@@ -177,6 +190,25 @@ The suite lives in ``heudiconv/tests/`` (plus per-submodule test files) and is b
 `pytest <https://docs.pytest.org>`_.  A number of tests need external tools (``dcm2niix``,
 ``git-annex``, ``datalad``) and will be skipped if those are unavailable, so a fully green local
 run may still cover less than CI does.
+
+The no-duplication rule above applies to tests in particular.  Whenever a set of tests differ only
+in their inputs and expected outputs, express them as a **single**
+`parametrized <https://docs.pytest.org/en/stable/how-to/parametrize.html>`_ test rather than as
+several near-identical functions::
+
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            (0.02, True),  # 2% difference - compatible
+            (0.03, True),
+            (0.10, False),
+        ],
+    )
+    def test_something(value: float, expected: bool) -> None:
+        assert check(value) is expected
+
+Adding a case then costs one line, every case is exercised by the same assertions, and a failure
+reports which case broke.  Shared setup belongs in a fixture for the same reason.
 
 To reproduce the full CI matrix of linting, type checking, and tests in one go, run ``tox``.
 
@@ -210,6 +242,14 @@ implementation's current behavior rather than the behavior we actually want, and
 asserting the wrong thing.  Being able to identify them makes it feasible to revisit them when the
 underlying behavior is questioned.  Please double-check that such tests would indeed fail without
 the accompanying change.
+
+Assistants also have a strong tendency to emit a pile of copy-pasted test functions where one
+parametrized test would do, so the no-duplication rule needs enforcing especially firmly here.
+Before submitting AI-assisted tests, read them over and collapse any near-identical functions into
+a single ``@pytest.mark.parametrize``\ d test, hoist repeated setup into a fixture, and delete the
+cases which are not actually distinct.  Reviewers will ask for this, so it is cheaper to do it up
+front — and it is a good forcing function for the understanding you are expected to have of the
+code you submit.
 
 If an assistant was used substantially for the non-test portion of a change as well, please say so
 in the pull request description.  Do not paste in code you do not understand or cannot explain in
