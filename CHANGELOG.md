@@ -1,3 +1,28 @@
+# v1.5.0 (Thu Aug 06 2026)
+
+#### 🚀 Enhancement
+
+- Ensure all IntendedFor matching params must match [#860](https://github.com/nipy/heudiconv/pull/860) ([@mslw](https://github.com/mslw))
+
+#### 🏠 Internal
+
+- [gh-actions](deps): Bump codecov/codecov-action from 6 to 7 [#857](https://github.com/nipy/heudiconv/pull/857) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- [gh-actions](deps): Bump actions/checkout from 6 to 7 [#861](https://github.com/nipy/heudiconv/pull/861) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- [gh-actions](deps): Bump actions/setup-python from 6 to 7 [#862](https://github.com/nipy/heudiconv/pull/862) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+
+#### 📝 Documentation
+
+- Fix RTD build: update build.os to ubuntu-24.04 [#865](https://github.com/nipy/heudiconv/pull/865) ([@claude](https://github.com/claude) [@yarikoptic-gitmate](https://github.com/yarikoptic-gitmate))
+
+#### Authors: 4
+
+- [@dependabot[bot]](https://github.com/dependabot[bot])
+- Claude ([@claude](https://github.com/claude))
+- GitMate for @yarikoptic ([@yarikoptic-gitmate](https://github.com/yarikoptic-gitmate))
+- Michał Szczepanik ([@mslw](https://github.com/mslw))
+
+---
+
 # v1.4.0 (Tue Apr 28 2026)
 
 #### 🚀 Enhancement
