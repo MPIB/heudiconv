@@ -1112,6 +1112,83 @@ def test_find_compatible_fmaps_for_run(
             assert compatible_fmaps == expected_compatible_fmaps[json_file]
 
 
+def test_find_compatible_fmaps_for_run_union(monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Test find_compatible_fmaps_for_run with multiple parameters.
+
+    This tests the behavior of find_compatible_fmaps_for_run when it
+    is given more than one parameter to match on. Expects multiple
+    parameters to be treated as a union (AND).
+    """
+
+    def mock_get_key_info_for_fmap_assignment(
+        json_file: str, matching_parameter: str
+    ) -> list[Any]:
+        """
+        Mock matching parameters
+
+        Mock a situation where we have three custom acquisition labels
+        and two sets of shims - but only one pairing where both match.
+
+        The names are bids-like but not quite bids - this should not
+        matter since we are testing general logic.
+        """
+        shims1 = [1, 2, 3, 4]
+        shims2 = [5, 6, 7, 8]
+        mock_info = {
+            "sub-01/func/sub-01_task-foo.json": {
+                "ShimSetting": shims1,
+                "CustomAcquisitionLabel": "foo",
+            },
+            "sub-01/func/sub-01_task-bar.json": {
+                "ShimSetting": shims1,
+                "CustomAcquisitionLabel": "bar",
+            },
+            "sub-01/func/sub-01_task-baz.json": {
+                "ShimSetting": shims1,
+                "CustomAcquisitionLabel": "baz",
+            },
+            "sub-01/fmap/sub-01_acq-foo.json": {
+                "ShimSetting": shims1,
+                "CustomAcquisitionLabel": "foo",
+            },
+            "sub-01/fmap/sub-01_acq-bar.json": {
+                "ShimSetting": shims2,
+                "CustomAcquisitionLabel": "bar",
+            },
+        }
+        return [mock_info[json_file][matching_parameter]]
+
+    monkeypatch.setattr(
+        "heudiconv.bids.get_key_info_for_fmap_assignment",
+        mock_get_key_info_for_fmap_assignment,
+    )
+
+    fmap_groups = {
+        "foo": ["sub-01/fmap/sub-01_acq-foo.json"],
+        "bar": ["sub-01/fmap/sub-01_acq-bar.json"],
+    }
+    param_union = ["ShimSetting", "CustomAcquisitionLabel"]
+
+    # for task-foo, one fmap matches by label and shims
+    x = find_compatible_fmaps_for_run(
+        "sub-01/func/sub-01_task-foo.json", fmap_groups, param_union
+    )
+    assert "foo" in x.keys() and len(x) == 1
+
+    # for task-bar, we have either shims or label, but not both
+    x = find_compatible_fmaps_for_run(
+        "sub-01/func/sub-01_task-bar.json", fmap_groups, param_union
+    )
+    assert len(x) == 0
+
+    # for task-baz we have matching shims, but not label
+    x = find_compatible_fmaps_for_run(
+        "sub-01/func/sub-01_task-baz.json", fmap_groups, param_union
+    )
+    assert len(x) == 0
+
+
 @pytest.mark.ai_generated
 @pytest.mark.parametrize(
     "rel_diff,should_match",

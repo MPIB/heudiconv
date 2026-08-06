@@ -826,7 +826,7 @@ def find_compatible_fmaps_for_run(
                     for x, y in zip(json_info[param], fm_info)
                 )
             if not compatible:
-                continue  # don't bother checking more params
+                break  # don't bother checking more params
         if compatible:
             compatible_fmap_groups[fm_key] = fm_group
 
