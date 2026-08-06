@@ -1591,14 +1591,14 @@ def test_BIDSFile(caplog: pytest.LogCaptureFixture) -> None:
 
 def test_populate_aggregated_jsons_events(tmp_path: Path) -> None:
     """A single _events.tsv is generated for files differing only in
-    entities the events are independent of (here: 'rec' and 'part')."""
+    entities the events are independent of ('chunk', 'echo', and 'part') """
     func_path = tmp_path / "sub-01" / "func"
     bold_json = {"RepetitionTime": 1.0, "TaskName": "rest"}
     create_tree(
         str(func_path),
         {
             f"sub-01_task-rest_{entity}_bold.json": dict(bold_json)
-            for entity in ["rec-A", "rec-B", "part-mag", "part-phase"]
+            for entity in ["chunk-1", "chunk-2", "echo-1", "echo-2", "part-mag", "part-phase"]
         },
     )
 
