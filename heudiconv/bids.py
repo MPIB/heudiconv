@@ -1147,8 +1147,10 @@ class BIDSFile:
         return entity in self._entities
 
     def drop(self, entity: str, missing_ok: bool=False) -> None:
-        if not missing_ok and entity not in self._entities:
-            raise ValueError(f"{self} does not contain entity {entity!r}")
+        if entity not in self._entities:
+            if not missing_ok:
+                raise ValueError(f"{self} does not contain entity {entity!r}")
+            return
         self._entities.pop(entity)
 
     def set(self, entity: str, value: str, overwrite: bool = True) -> None:
