@@ -113,8 +113,8 @@ so a plain virtualenv is enough to get a complete development environment::
 
   pip install dcm2niix git-annex
 
-`dcm2niix <https://pypi.org/project/dcm2niix/>`_ and
-`git-annex <https://pypi.org/project/git-annex/>`_ are wheels bundling the corresponding binaries
+`dcm2niix <https://pypi.org/project/dcm2niix/>`__ and
+`git-annex <https://pypi.org/project/git-annex/>`__ are wheels bundling the corresponding binaries
 for common platforms; ``datalad`` is pulled in by the ``datalad`` (and hence ``all``) extra of
 HeuDiConv itself.  You may of course still prefer to obtain them from your system package manager
 (e.g. NeuroDebian, conda, or Homebrew) if you already have those set up.
