@@ -1076,6 +1076,7 @@ class BIDSFile:
         "mt",
         "part",
         "recording",
+        "chunk",
     ]
 
     def __init__(
